@@ -18,13 +18,14 @@ const escapeHtml = (value = "") =>
 
 export const submitEnquiry = async (req, res) => {
   try {
-    const { name, email, phone, visaType, message } = req.body;
+    const { name, email, phone, country, visaType, message } = req.body;
 
-    // Validate required fields
+    // Required field validation
     if (
       !name?.trim() ||
       !email?.trim() ||
       !phone?.trim() ||
+      !country?.trim() ||
       !visaType?.trim()
     ) {
       return res.status(400).json({
@@ -33,7 +34,7 @@ export const submitEnquiry = async (req, res) => {
       });
     }
 
-    // Validate email
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email.trim())) {
@@ -43,11 +44,12 @@ export const submitEnquiry = async (req, res) => {
       });
     }
 
-    // Validate field lengths
+    // Validate lengths
     if (
       name.trim().length > 100 ||
       email.trim().length > 254 ||
       phone.trim().length > 20 ||
+      country.trim().length > 100 ||
       visaType.trim().length > 100 ||
       (message && message.length > 3000)
     ) {
@@ -62,12 +64,12 @@ export const submitEnquiry = async (req, res) => {
       name: name.trim(),
       email: email.trim().toLowerCase(),
       phone: phone.trim(),
+      country: country.trim(),
       visaType: visaType.trim(),
       message: message?.trim() || "",
     });
 
-    // 2. Send email notification using Resend
-    // Email failure should not lose the saved enquiry.
+    // 2. Send email notification
     try {
       if (
         !process.env.RESEND_API_KEY ||
@@ -91,6 +93,7 @@ export const submitEnquiry = async (req, res) => {
           <p><strong>Name:</strong> ${escapeHtml(enquiry.name)}</p>
           <p><strong>Email:</strong> ${escapeHtml(enquiry.email)}</p>
           <p><strong>Phone:</strong> ${escapeHtml(enquiry.phone)}</p>
+          <p><strong>Interested Country:</strong> ${escapeHtml(enquiry.country)}</p>
           <p><strong>Visa Type:</strong> ${escapeHtml(enquiry.visaType)}</p>
 
           <p><strong>Message:</strong></p>
@@ -109,6 +112,7 @@ export const submitEnquiry = async (req, res) => {
     } catch (emailError) {
       console.error("Enquiry email notification failed:", emailError);
 
+      // Enquiry is already saved
       return res.status(201).json({
         success: true,
         emailSent: false,
@@ -117,7 +121,6 @@ export const submitEnquiry = async (req, res) => {
       });
     }
 
-    // 3. Enquiry saved and email sent
     return res.status(201).json({
       success: true,
       emailSent: true,

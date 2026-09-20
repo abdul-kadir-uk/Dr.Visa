@@ -26,6 +26,13 @@ const enquirySchema = new mongoose.Schema(
       maxlength: 20,
     },
 
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+
     visaType: {
       type: String,
       required: true,

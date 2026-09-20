@@ -1,10 +1,70 @@
+// components/home/EnquiryForm.tsx
+
 "use client";
 
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 
 export default function EnquiryForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setLoading(true);
+    setError("");
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const enquiryData = {
+      name: formData.get("name"),
+      phone: formData.get("phone"),
+      email: formData.get("email"),
+      country: formData.get("country"),
+      visaType: formData.get("visaType"),
+      message: formData.get("message"),
+    };
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      if (!apiUrl) {
+        throw new Error("API URL is not configured.");
+      }
+
+      const response = await fetch(
+        `${apiUrl.replace(/\/$/, "")}/api/enquiries`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(enquiryData),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit enquiry.");
+      }
+
+      // Enquiry has been saved successfully
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="bg-white py-20" id="enquiry">
@@ -41,12 +101,16 @@ export default function EnquiryForm() {
                 </h3>
 
                 <p className="mt-3 text-slate-600">
-                  Your form has been submitted on this page. Please note that no
-                  enquiry has been sent or saved yet.
+                  Your enquiry has been received successfully. Our team will
+                  contact you soon.
                 </p>
 
                 <button
-                  onClick={() => setSubmitted(false)}
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setError("");
+                  }}
                   className="mt-6 rounded-lg bg-blue-900 px-6 py-3 font-semibold text-white hover:bg-blue-800"
                 >
                   Submit Another Enquiry
@@ -60,19 +124,15 @@ export default function EnquiryForm() {
                   Fill in your details and tell us what you&apos;re looking for.
                 </p>
 
-                <form
-                  className="mt-6 space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setSubmitted(true);
-                  }}
-                >
+                <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <input
                       type="text"
                       name="name"
                       placeholder="Full Name"
                       required
+                      maxLength={100}
+                      disabled={loading}
                       className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700"
                     />
 
@@ -81,8 +141,10 @@ export default function EnquiryForm() {
                       name="phone"
                       placeholder="Phone Number"
                       required
+                      maxLength={20}
                       pattern="[0-9+\-\s()]{7,20}"
                       title="Enter a valid phone number"
+                      disabled={loading}
                       className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700"
                     />
                   </div>
@@ -92,6 +154,8 @@ export default function EnquiryForm() {
                     name="email"
                     placeholder="Email Address"
                     required
+                    maxLength={254}
+                    disabled={loading}
                     className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700"
                   />
 
@@ -100,6 +164,7 @@ export default function EnquiryForm() {
                       name="country"
                       required
                       defaultValue=""
+                      disabled={loading}
                       className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none focus:border-blue-700"
                     >
                       <option value="" disabled>
@@ -118,6 +183,7 @@ export default function EnquiryForm() {
                       name="visaType"
                       required
                       defaultValue=""
+                      disabled={loading}
                       className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none focus:border-blue-700"
                     >
                       <option value="" disabled>
@@ -134,17 +200,38 @@ export default function EnquiryForm() {
                   <textarea
                     name="message"
                     rows={4}
+                    maxLength={3000}
                     placeholder="Tell us about your plans..."
-                    required
+                    disabled={loading}
                     className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700"
                   />
 
+                  {/* Error Message */}
+                  {error && (
+                    <p
+                      role="alert"
+                      className="rounded-lg bg-red-50 p-3 text-sm text-red-600"
+                    >
+                      {error}
+                    </p>
+                  )}
+
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3.5 font-bold text-white transition hover:bg-red-700"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3.5 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    Submit Enquiry
-                    <Send size={18} />
+                    {loading ? (
+                      <>
+                        Submitting...
+                        <Loader2 size={18} className="animate-spin" />
+                      </>
+                    ) : (
+                      <>
+                        Submit Enquiry
+                        <Send size={18} />
+                      </>
+                    )}
                   </button>
 
                   <p className="text-xs leading-5 text-slate-500">

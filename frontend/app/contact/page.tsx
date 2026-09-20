@@ -1,3 +1,5 @@
+// app/contact/page.tsx
+
 import Link from "next/link";
 import {
   MapPin,
