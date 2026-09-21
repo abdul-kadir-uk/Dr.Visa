@@ -1,5 +1,3 @@
-// components/home/EnquiryForm.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -142,7 +140,7 @@ export default function EnquiryForm() {
                       placeholder="Phone Number"
                       required
                       maxLength={20}
-                      pattern="[0-9+\-\s()]{7,20}"
+                      pattern="[0-9+()\\s-]{7,20}"
                       title="Enter a valid phone number"
                       disabled={loading}
                       className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-700"

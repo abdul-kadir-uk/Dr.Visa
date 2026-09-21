@@ -1,3 +1,4 @@
+// app/about/page.tsx
 import Link from "next/link";
 import {
   Target,
@@ -71,6 +72,8 @@ export default function AboutPage() {
                 src="/images/about-team.jpg"
                 alt="Visa consultancy team assisting clients"
                 className="h-87.5 w-full object-cover sm:h-112.5"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
